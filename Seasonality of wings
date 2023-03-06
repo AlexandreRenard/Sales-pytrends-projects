@@ -1,0 +1,48 @@
+!pip install pytrends
+
+from pytrends.request import TrendReq
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Create a PyTrends object
+pytrends = TrendReq(hl='en-US', tz=360)
+
+# Set the keywords we want to study
+keywords = ['chicken wings', 'vegan chicken wings']
+
+# Set the time frame for the study
+start_date = '2016-01-01'
+end_date = '2022-03-06'
+timeframe = start_date + ' ' + end_date
+
+# Get the search interest for the keywords in the given time frame
+pytrends.build_payload(keywords, timeframe=timeframe)
+interest_over_time = pytrends.interest_over_time()
+
+# Resample the data to get weekly and monthly averages
+weekly_data = interest_over_time.resample('W').mean()
+monthly_data = interest_over_time.resample('M').mean()
+
+# Plot the weekly and monthly data
+fig, axs = plt.subplots(2, 1, figsize=(10,10))
+axs[0].plot(weekly_data)
+axs[0].set_title('Weekly Average Search Interest')
+axs[0].legend(keywords)
+axs[1].plot(monthly_data)
+axs[1].set_title('Monthly Average Search Interest')
+axs[1].legend(keywords)
+
+# Find the most and least popular weeks for each keyword
+for keyword in keywords:
+    print('--- ' + keyword + ' ---')
+    weekly_average = interest_over_time[keyword].resample('W').mean()
+    max_week = weekly_average.idxmax().strftime('%Y-%m-%d')
+    min_week = weekly_average.idxmin().strftime('%Y-%m-%d')
+    print('Most popular week: ' + max_week)
+    print('Least popular week: ' + min_week)
+
+# Find the month when people get interested in vegan chicken wings
+vegan_chicken_wings_monthly = monthly_data['vegan chicken wings']
+vegan_chicken_wings_monthly_sorted = vegan_chicken_wings_monthly.sort_values(ascending=False)
+most_popular_month = vegan_chicken_wings_monthly_sorted.index[0].strftime('%B %Y')
+print('The most popular month for vegan chicken wings is ' + most_popular_month)
